@@ -1,0 +1,338 @@
+---
+title: "DRAFT: Estuary Tipping Point Analysis"
+subtitle: "Part I: Caloosahatchee River Estuary"
+author: "Paul Julian"
+date: "2020-04-16 (updated: `r Sys.Date()`)"
+output:
+  xaringan::moon_reader:
+    css: ["default","custcss.css"]
+    lib_dir: libs
+    self_contained: TRUE
+    nature:
+      slideNumberFormat: "%current%"
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+      ratio: "4:3"
+    seal: false
+editor_options: 
+  chunk_output_type: console
+---
+
+
+```{r setup, include=FALSE}
+library(knitr)
+library(fontawesome)
+
+options(htmltools.dir.version = FALSE)
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
+
+```
+
+```{r custcss,include=FALSE}
+writeLines(
+  c(".tiny { 
+  font-size: 75%;
+}",
+".fancy {
+  font-family: 'Cormorant Upright', serif;
+  font-weight: 700;
+}"
+),"custcss.css")
+
+```
+
+```{r load_refs,include=FALSE,cache=FALSE}
+# 
+
+# library(RefManageR)
+# BibOptions(check.entries = FALSE,
+#            bib.style = "authoryear",
+#            cite.style = "alphabetic",
+#            style = "markdown",
+#            max.names = 2,
+#            hyperlink = FALSE,
+#            dashed = FALSE,
+#            no.print.fields=c("doi","url","isbn","issn","urldate","language"))
+# myBib <- ReadBib("Exported Items.bib", check = FALSE)
+# Citep(myBib)
+
+```
+
+layout: true
+
+---
+name: xaringan-title
+class: left, middle
+
+# DRAFT: Estuary Tipping Point Analysis
+
+### .fancy[Part I: Caloosahatchee River Estuary]
+
+<!--.large[<font color="white">Paul Julian, PhD | `r format(Sys.Date(),"%B %d,%Y")`</font>]-->
+
+.large[Paul Julian, PhD | `r format(as.Date("2020-04-16"),"%B %d, %Y")`</font>]
+
+<!-- this ends up being the title slide since seal = FALSE-->
+
+---
+class: left
+
+## Motivation
+- Initial discussions regarding possible management actions relative to LOSOM development to reduce or mitigate algal blooms.
+
+## Objective
+- Evalute potential tipping points within the freshwater portion of the Caloosahatchee River Estuary relative to freshwater inputs (_via S-79_).
+
+- Understanding tipping points may aid in anticipating or expecting potential regime shifts within the estuaries in response to changes in water management and restoration.
+
+.footnote[
+.tiny[LOSOM = Lake Okeechobee System Operating Manual [(USACE Webpage)](https://www.saj.usace.army.mil/LOSOM/)]
+]
+
+---
+class: left
+
+## Tipping Points
+- Vaguely defined in the current literature
+
+- Generally defined as transistion in biological characteristics (i.e. species diversity) relative to a ecological driver (i.e. eutrophication)
+  - see Robin et al., (2014) and Vanacker et al., (2015)
+
+- Also discussed relative to long-term state changes in an ecosystem (Glibert et al., 2014).
+
+.footnote[
+- .tiny[Robin et al., 2014. Biodiversity in eutrophicated shallow lakes: determination of tipping points and tools for monitoring. Hydrobiologia 723, 63–75.] 
+- .tiny[Vanacker et al., 2015. Determining tipping points in aquatic ecosystems: The case of biodiversity and chlorophyll α relations in fish pond systems. Ecological Indicators 52, 184–193.]
+- .tiny[Glibert et al., 2014. Eutrophication of a Maryland/Virginia Coastal Lagoon: a Tipping Point, Ecosystem Changes, and Potential Causes. Estuaries and Coasts 37, 128–146.]
+]
+
+---
+name: frame
+class: left
+
+## Conceptual Framework
+
+- Hypothetically a tipping point analysis is identifying potential breakpoints comparing some biotic metric versus potential driver(s).
+  - In the case of Vanacker et al., (2015) the biotic metric were a series of phytoplankton biodiversity indices  .tiny[_(i.e. Richness, Jackknife Index, Fisher's &alpha;, Simpson Index and Evenness)_] versus a metric of eutrophication .tiny[_(i.e. spring Chlorophyll-a concentration)_].
+
+--
+.pull-left[
+```{r,echo=FALSE,dpi=100,fig.width=4,fig.height=3,fig.align='center'}
+library(AnalystHelper)
+library(segmented)
+
+x <- c(1:10, 13:22)
+y <- numeric(20)
+
+set.seed(1)
+## Create first segment
+y[1:10] <- 20:11 + rnorm(10, 0, 1.5)
+## Create second segment
+y[11:20] <- seq(10.5,9, len=10) + rnorm(10, 0, 1)
+
+mod=lm(y~x)
+seg.mod=segmented(mod,seg.Z=~x)
+seg.mod.pred=predict(seg.mod,data.frame(x=1:22),interval="confidence")
+
+xlim.val=c(1,22);by.x=5;xmaj=seq(xlim.val[1],xlim.val[2],by.x);xmin=seq(xlim.val[1],xlim.val[2],by.x/2);
+ylim.val=c(5,22);by.y=5;ymaj=seq(ylim.val[1],ylim.val[2],by.y);ymin=seq(ylim.val[1],ylim.val[2],by.y/2);
+par(family="serif",mar=c(1,1,1,1),oma=c(1,1,1,1));
+plot(y~x,ylim=ylim.val,xlim=xlim.val,type="n",axes=F,ylab=NA,xlab=NA)
+abline(h=ymaj,v=xmaj,lty=2,col="grey")
+points(x,y,pch=21,bg=adjustcolor("grey",0.5),cex=1.5,lwd=0.1)
+shaded.range(1:22,seg.mod.pred[,2],seg.mod.pred[,3],"indianred1",lty=0,col.adj=0.1)
+lines(1:22,seg.mod.pred[,2],lty=2,col="indianred1")
+lines(1:22,seg.mod.pred[,3],lty=2,col="indianred1")
+lines(1:22,seg.mod.pred[,1],lwd=2,col="indianred1")
+axis_fun(1,xmaj,xmin,NA)
+axis_fun(2,ymaj,ymin,NA)
+box(lwd=1)
+mtext(side=1,line=1,"Enviromental Indicator/Driver")
+mtext(side=2,line=1,"Biological Index")
+```
+]
+
+--
+
+.pull-right[
+For this analysis
+- Environment Indicators/Drivers:
+  - S-79 Discharge
+  - S-79 TP FWM
+  - S-79 TN FWM
+
+- Biological Index:
+  - Bloom potential 
+]
+
+
+.footnote[
+.tiny[TP = Total Phosphous; TN = Total Nitrogen; FWM = Flow-weighted Mean]
+]
+
+---
+name: bloom
+class: left
+
+## Bloom Potential
+
+--
+In Lake Okeechobee, several studies (Havens, 1994; Walker and Havens, 1995) have indicated that a Chlorophyll-_a_ (Chl-_a_) concentration of > 40 &mu;g L<sup>-1</sup> was indicative of algal blooms.
+
+--
+
+In Florida Bay, bloom conditions range from Chl-_A_ concentration of 5 to 20 &mu;g L<sup>-1</sup> (Boyer et al., 2009; Glibert et al., 2009).
+
+--
+
+In Maryland/Virginia Coastal Bays area, most of the algal blooms were observed with Chl-_A_ concentrations >5 &mu;g L<sup>-1</sup> (Gilbert et al., 2014).
+
+.footnote[
+
+- .tiny[Boyer, et al., 2009. Phytoplankton bloom status: Chlorophyll a biomass as an indicator of water quality condition in the southern estuaries of Florida, USA. Ecological Indicators 9, S56–S67.]
+- .tiny[Glibert, et al., 2009. Florida Bay: Water quality status and trends, historic and emerging algal bloom problems. Contributions in Marine Science 38, 5–17.]
+- .tiny[Glibert, P.M., Hinkle, D.C., Sturgis, B., Jesien, R.V., 2014. Eutrophication of a Maryland/Virginia Coastal Lagoon: a Tipping Point, Ecosystem Changes, and Potential Causes. Estuaries and Coasts 37, 128–146.]
+- .tiny[Havens, 1994. Relationships of Annual Chlorophyll a Means, Maxima, and Algal Bloom Frequencies in a Shallow Eutrophic Lake (Lake Okeechobee, Florida, USA). Lake and Reservoir Management 10, 133–136.]
+- .tiny[Walker and Havens, 1995. Relating Algal Bloom Frequencies to Phosphorus Concentrations in Lake Okeechobee. Lake and Reservoir Management 11, 77–83.]
+]
+
+
+---
+class: left
+
+.pull-left[
+### Data
+
+- Water quality and hydrologic data were retrieved from the South Florida Water Management District (SFWMD) online database ([DBHYDRO]( www.sfwmd.gov/dbhydro)).
+
+- S-77, S-79 and Caloosahatchee River Esturay (CRE) monitoring network.
+
+- Period of Record: May 1, 2004 - April 30, 2019 (WY2005 - 2019).
+
+- Data were screened for fatal qualifers and reversals (i.e. SRP > TP).
+
+- Data reported as less than method detection limit (MDL) were assigned one-half the MDL.
+
+]
+
+.pull-right[
+### Statistical Analysis
+
+- Annual Flow-weighted Mean concentrations computed for S-79 and S-77.
+  - Water quality was weighted by flow on day of sampling using the `wtd.mean()` function in the `Hmisc` R-library.
+  
+- Potential Bloom was estimated for each monitoring location as a proportion of samples with Chl-_a_ was greater than 10  &mu;g L<sup>-1</sup> within a given year. 
+
+- _Initially_ segment linear models (`segmented()` in the `segmented` R-library) was used to evaluate change points between S-79 annual total discharge volume, TP and TN FWM relative to the potential bloom frequency.   
+
+- Analyses performed in R (Ver `r paste(version$major, version$minor,sep=".")`)
+]
+
+---
+class: left
+
+## Study Area
+
+```{r 0, out.width="100%",echo=FALSE,fig.align="center"}
+# Ideally this would all be complied with data and analysis
+#to save time compling presentation
+
+knitr::include_graphics("D:/_GitHub/EstuaryTip/Plots/png/CRE_map.png")
+```
+
+
+---
+class: left
+
+## Freshwater Inputs
+Annual discharge and FWM concentrations (&#177; flow-weighted standard deviation) for S-77 and S-79 when data was available.
+
+```{r, out.width="50%",echo=FALSE,fig.align="center"}
+#to save time compling presentation
+knitr::include_graphics("D:/_GitHub/EstuaryTip/Plots/png/CRE_FWMs.png")
+```
+
+---
+class: left
+
+## Estuarine Water Quality
+
+Boxplot (with sample size, numbers above boxplots) of water quality grab samples during the period of record.
+
+```{r, out.width="70%",echo=FALSE,fig.align="center"}
+#to save time compling presentation
+knitr::include_graphics("D:/_GitHub/EstuaryTip/Plots/png/CRE_WQ.png")
+```
+
+---
+class: left
+
+Annual empirical cumulative distribution function (eCDF) &#177; 95% Confidence Interval for CES02, 03, 04, and 05. Potential bloom metric (Chl-_a_ 10 &mu;g L<sup>-1</sup>) identified with dashed black line).  
+
+```{r, out.width="110%",echo=FALSE,fig.align="center"}
+#to save time compling presentation
+knitr::include_graphics("D:/_GitHub/EstuaryTip/Plots/png/CRE_EstuaryChlaecdf.png")
+```
+
+
+---
+class: left
+
+```{r, out.width="60%",echo=FALSE,fig.align="center"}
+#to save time compling presentation
+knitr::include_graphics("D:/_GitHub/EstuaryTip/Plots/png/CRE_EstuaryChla10.png")
+```
+
+---
+class: left
+
+### Segmented Regression 
+
+```{r, out.width="90%",echo=FALSE,fig.align="center"}
+#to save time compling presentation
+knitr::include_graphics("D:/_GitHub/EstuaryTip/Plots/png/CRE_EstuarySeg.png")
+```
+
+---
+class: left
+
+### Segmented Regression
+
+```{r,echo=F}
+library(kableExtra)
+options(knitr.kable.NA = '---')
+seg.rslt=read.csv("D:/_GitHub/EstuaryTip/Export/annualsegmented.csv")
+seg.rslt[,3:6]=round(seg.rslt[,3:6],2)
+# seg.rslt$BK.pt=round(seg.rslt$BK.pt,2)
+# seg.rslt$BK.pt.SE=round(seg.rslt$BK.pt.SE,2)
+# seg.rslt$RSE=round(seg.rslt$RSE,3)
+# seg.rslt$R2=round(seg.rslt$R2,2)
+
+
+knitr::kable(seg.rslt,format="html",
+      col.names = c("Variable","Estuary Site","Break-point","Break-point<br>Standard Error","Model<br>RSE","Model<br>R\u00B2"),
+      align=c("l","l","c","c","c","c"),row.names = F,escape=F, booktabs = T)%>%
+  kable_styling(bootstrap_options = "striped",full_width = F,font_size=12)%>%
+  collapse_rows(columns=1,valign="top")%>%
+  footnote(general=c("Units associated iwth variables"),
+           number=c("Discharge volume: km\u00B3 Yr\u207B\u00B9","Total Phosphorus Flow-weighted Mean: \u03BCg L\u207B\u00B9","Total Nitrogen Flow-weighted Mean: mg L\u207B\u00B9"),escape=F)
+```
+
+---
+class: left
+
+### Next Steps
+
+- Further statistical evaluation of segmented models
+
+- Evaluate other factors in segmented regression approach.
+
+- Evaluate tipping points at estuary sites versus a moving 30, 60, 90-day cumulative discharge and FWM at S-79. 
+
+- Evaluate tipping points for each site versus _in-situ_ parameters (i.e. color, TP, TP:TN, SRP:DIN, etc.)
+
+.footnote[
+Project analysis, information and presentation can be found at [https://github.com/SwampThingPaul/EstuaryTip](https://github.com/SwampThingPaul/EstuaryTip)
+]
+
