@@ -23,12 +23,19 @@ library(rgdal)
 library(rgeos)
 library(raster)
 
+# PCA 
+library(vegan)
+library(REdaS)
+
 # Analysis Libraries
 library(segmented)
 library(gvlma)
 
+
+
 #Paths
-wd="D:/_GitHub/EstuaryTip"
+#wd="D:/_GitHub/EstuaryTip"
+wd="C:/Julian_LaCie/_GitHub/EstuaryTip"
 
 paths=paste0(wd,c("/Plots/","/Export/","/Data/"))
 #Folder.Maker(paths);#One and done. Creates folders in working directory.
@@ -46,11 +53,24 @@ P.mw=30.973762
 C.mw=12.0107
 
 # GIS Data ----------------------------------------------------------------
-gen.GIS="D:/_GISData"
+#gen.GIS="D:/_GISData"
+gen.GIS="C:/Julian_LaCie/_GISData"
 
 wmd.mon=spTransform(readOGR(paste0(gen.GIS,"/SFWMD_Monitoring_20190909"),"Environmental_Monitoring_Stations"),utm17)
 wq.wmd.mon=subset(wmd.mon,ACTIVITY_T=="Chemistry"&ACTIVITY_S=="Surface Water Grab")
 #plot(subset(wq.wmd.mon,STATION%in%c("S79",paste0("CES0",2:11))))
+
+CRE.ext=extent(gBuffer(subset(wq.wmd.mon,STATION%in%c("S79","ROOK471","ROOK477")),width=1000))
+CREr=raster(xmn=CRE.ext[1],xmx=CRE.ext[2],ymn=CRE.ext[3],ymx=CRE.ext[4],crs=utm17)
+CREr=setValues(CREr,0)
+CREr=raster::mask(CREr,subset(wq.wmd.mon,STATION=="S79"))
+CRErD=distance(CREr)
+
+plot(CRErD)
+plot(subset(wq.wmd.mon,SITE%in%paste0("CES0",2:9)),add=T)
+
+DistDownstream=data.frame(SITE=subset(wq.wmd.mon,STATION%in%paste0("CES0",2:9))@data$STATION,
+           Dist_km=raster::extract(CRErD,subset(wq.wmd.mon,STATION%in%paste0("CES0",2:9)))/1000)
 
 basins.all=spTransform(readOGR(paste0(gen.GIS,"/AHED_release/AHED_20171102.gdb"),"WATERSHED"),utm17)
 #tmap_mode("view")
@@ -234,6 +254,204 @@ boxplot(TON~ALIAS,subset(wq.dat.xtab,WY%in%seq(2005,2019,1)),outline=F)
 boxplot(DIN~ALIAS,wq.dat.xtab,outline=F)
 boxplot(Si~ALIAS,wq.dat.xtab,outline=F)
 boxplot(TOC~ALIAS,wq.dat.xtab,outline=F)
+
+
+
+# PCA / NMDS --------------------------------------------------------------
+head(wq.dat.xtab,3L)
+unique(wq.dat.xtab$ALIAS)
+head(q.dat,3L)
+
+q.dat$q.30d=with(q.dat,ave(Data.Value,SITE,FUN = function(x) c(rep(NA,29),rollapply(x,30,sum,na.rm=T))))
+head(q.dat)
+
+plot(Data.Value~Date.EST,subset(q.dat,SITE=="S79"),type="l")
+with(subset(q.dat,SITE=="S79"),lines(Date.EST,q.30d,col="red"))
+plot(q.30d~Date.EST,subset(q.dat,SITE=="S79"),type="l")
+
+est.sites=paste0("CES0",2:9)
+wq.vars=c("ALIAS", "Date.EST","WY", "Chla", "Color", 
+          "PAR", "Sal","SRP","TN", "TP", "Turb", "DIN")
+q.vars=c("Date.EST","Data.Value","q.30d")#c("Date.EST","Data.Value")
+wq.dat.xtab.pca=merge(subset(wq.dat.xtab,ALIAS%in%est.sites)[,wq.vars],
+                      subset(q.dat,SITE=="S79")[,q.vars],"Date.EST",all.x=T)
+
+range(wq.dat.xtab.pca$WY)
+wq.dat.xtab.pca=subset(wq.dat.xtab.pca,WY%in%seq(2005,2019,1))
+head(wq.dat.xtab.pca)
+
+wq.dat.xtab.pca=merge(wq.dat.xtab.pca,DistDownstream,by.x=c("ALIAS"),by.y=c("SITE"))
+
+#How many rows of data do we have?
+nrow(wq.dat.xtab.pca)
+
+#How many rows contain NAs
+nrow(na.omit(wq.dat.xtab.pca))
+
+wq.dat.xtab.pca$Data.Value=cfs.to.km3d(wq.dat.xtab.pca$Data.Value)
+wq.dat.xtab.pca$q.30d=cfs.to.km3d(wq.dat.xtab.pca$q.30d)
+
+summary(wq.dat.xtab.pca)
+wq.dat.xtab.pca=na.omit(wq.dat.xtab.pca)
+subset(wq.dat.xtab.pca,Chla>200)
+wq.dat.xtab.pca=subset(wq.dat.xtab.pca,Chla<200)
+#write.csv(wq.dat.xtab.pca,paste0(export.path,"CRE_PCA_Data.csv"),row.names=F)
+
+apply(wq.dat.xtab.pca[,params],2,min)[-1]
+floor(apply(wq.dat.xtab.pca[,params],2,min)[-1])
+apply(wq.dat.xtab.pca[,params],2,max)[-1]
+
+#tiff(filename=paste0(plot.path,"CRE_WQ_scatter.tiff"),width=8,height=6.5,units="in",res=200,type="windows",compression=c("lzw"),bg="white")
+#png(filename=paste0(plot.path,"png/CRE_WQ_scatter.png"),width=8,height=6.5,units="in",res=200,type="windows",bg="white")
+par(family="serif",mar=c(1,1.5,0.1,0.1),oma=c(2.5,3.5,0.75,0.5));
+layout(matrix(1:100,10,10))
+cols=wesanderson::wes_palette("Zissou1",length(est.sites),"continuous")
+params=c("Chla", "Color", "Turb", "PAR", "Sal","TP", "SRP","TN", "DIN", "q.30d","Dist_km")#names(wq.dat.xtab.pca)[4:13]
+axis.lab=c("Chla\n(\u03BCg L\u207B\u00B9)","Color\n(PCU)","Turb\n(NTU)","PAR\n(m\u207B\u00B9)","Salinity\n(PSU)","TP\n(\u03BCg L\u207B\u00B9)","SRP\n(\u03BCg L\u207B\u00B9)", "TN\n(mg L\u207B\u00B9)","DIN\n(mg L\u207B\u00B9)","30d S-79 Q\n(km\u00B3 d\u207B\u00B9)","Dist. S-79\n(km)")
+#length(params)
+#length(axis.lab)
+for(j in 1:10){
+  if(j==2){
+    plot(0:1,0:1,axes=F,type="n",ylab=NA,xlab=NA)
+    legend(0,0.5,legend=est.sites,
+           pch=c(21),
+           lty=c(NA),lwd=c(0.1),
+           col=adjustcolor(cols,0.5),pt.bg=adjustcolor(cols,0.25),
+           pt.cex=2,ncol=4,cex=0.85,bty="n",y.intersp=1.25,x.intersp=0.75,xpd=NA,xjust=0,yjust=0.5,title.adj = 0,title="CRE Estuary Sites (WY2005 - 2019)")
+    
+  }
+  if(!(j%in%c(1,2))){for(k in 1:(j-1)){plot(0:1,0:1,axes=F,type="n",ylab=NA,xlab=NA)}}
+
+  
+  params2=params[-1:-j]
+  axis.lab2=axis.lab[-1:-j]
+  #xlim.val=c(0,300);by.x=150;xmaj=seq(xlim.val[1],xlim.val[2],by.x);xmin=seq(xlim.val[1],xlim.val[2],by.x/2)
+  lim.min=c(0,0,0,5,0,0,0,0,0,0,0)
+  lim.max=c(100,300,15,10,40,350,300,2,0.5,1,50);
+  by.val=(lim.max-lim.min)/2
+  for(i in 1:length(params2)){
+    xlim.val=c(lim.min[j],lim.max[j]);by.x=by.val[j];xmaj=seq(xlim.val[1],xlim.val[2],by.x);xmin=seq(xlim.val[1],xlim.val[2],by.x/2)
+    ylim.val=c(lim.min[-1:-j][i],lim.max[-1:-j][i]);by.y=by.val[-1:-j][i];ymaj=seq(ylim.val[1],ylim.val[2],by.y);ymin=seq(ylim.val[1],ylim.val[2],by.y/2)
+    plot(wq.dat.xtab.pca[,params[j]],wq.dat.xtab.pca[,params2[i]],xlim=xlim.val,ylim=ylim.val,axes=F,type="n",ylab=NA,xlab=NA)
+    abline(h=ymaj,v=xmaj,lty=3,col="grey")
+    #points(dat.xtab[,params[j]],dat.xtab[,params2[i]],pch=21,bg=adjustcolor("dodgerblue1",0.25),col=adjustcolor("grey",0.5),lwd=0.01,cex=0.8)
+    for(z in 1:length(est.sites)){
+      tmp=subset(wq.dat.xtab.pca,ALIAS==est.sites[z])
+      points(tmp[,params[j]],tmp[,params2[i]],pch=21,bg=adjustcolor(cols[z],0.25),col=adjustcolor(cols[z],0.5),lwd=0.01,cex=0.8)  
+    }
+    if(i==length(params2)){axis_fun(1,xmaj,xmin,format(xmaj),cex=0.8,line=-0.75)}else{axis_fun(1,xmaj,xmin,NA,cex=0.8,line=-0.5)}
+    if(j==1){axis_fun(2,ymaj,ymin,format(ymaj),cex=0.8)}else{axis_fun(2,ymaj,ymin,NA,cex=0.8)}
+    box(lwd=1)
+    if(j==1){mtext(side=2,line=2.5,cex=0.75,axis.lab2[i])}
+  }
+  mtext(side=1,line=2.5,cex=0.75,axis.lab[j])
+}
+dev.off()
+
+# Kaiser-Meyer-Olkin Statistics
+msa_kmos.rslt=KMOS(wq.dat.xtab.pca[,params])
+msa.rslt=data.frame(parameters=attributes(msa_kmos.rslt$MSA)$names,MSA=as.numeric(round(msa_kmos.rslt$MSA,2)))
+dput(msa.rslt)
+
+
+params=c("Chla", "Color", "PAR", "Sal","TP", "SRP","TN", "DIN", "q.30d","Dist_km")
+KMOS(wq.dat.xtab.pca[,params])
+
+# Bartlett's Test Of Sphericity
+bart_spher(wq.dat.xtab.pca[,params])
+
+# PCA
+pca.rslt <- rda(wq.dat.xtab.pca[,params],scale = T)
+summary(pca.rslt)$cont
+
+# Extract eigenvalues (see definition above)
+eig <- pca.rslt$CA$eig
+# Percent of variance explained by each compoinent
+variance <- eig*100/sum(eig)
+# The cumulative variance of each component (should sum to 1)
+cumvar <- cumsum(variance)
+# Combine all the data into one data.frame
+eig.pca <- data.frame(eig = eig, variance = variance,cumvariance = cumvar)
+
+#tiff(filename=paste0(plot.path,"CRE_WQ_scree.tiff"),width=6.5,height=4,units="in",res=200,type="windows",compression=c("lzw"),bg="white")
+#png(filename=paste0(plot.path,"png/CRE_WQ_scree.png"),width=6.5,height=3.5,units="in",res=200,type="windows",bg="white")
+layout(matrix(1:2,1,2))
+par(family="serif",mar=c(1,2,0.1,1),oma=c(3,1,0.75,0.5));
+
+ylim.val=c(0,6);by.y=2;ymaj=seq(ylim.val[1],100,by.y);ymin=seq(ylim.val[1],100,by.y/2)
+x=barplot(eig.pca$eig,ylim=ylim.val,col="grey",yaxt="n")
+abline(h=ymaj,lty=3,col="grey")
+x=barplot(eig.pca$eig,ylim=ylim.val,col="grey",yaxt="n",add=T)
+abline(h=1,lty=2,col="red",lwd=2)
+axis_fun(1,line=-0.7,x,x,seq(1,length(x),1),0.7)
+axis_fun(2,ymaj,ymin,ymaj,0.75);box(lwd=1)
+mtext(side=1,line=1.5,"Principal Components")
+mtext(side=2,line=1.5,"Eigenvalue")
+
+ylim.val=c(0,110);by.y=25;ymaj=seq(ylim.val[1],100,by.y);ymin=seq(ylim.val[1],100,by.y/2);#set y limit and delineates the major and minor ticks
+x=barplot(eig.pca$variance,ylim=ylim.val,col="white",border=0,yaxt="n")# inital plot to get the measurements
+abline(h=ymaj,lty=3,col="grey")#makes vertical lines from y axis
+x=barplot(eig.pca$variance,ylim=ylim.val,col="grey",yaxt="n",add=T)# the real plot that matters
+lines(x,eig.pca$cumvariance,col="indianred1",lwd=2)# adds the cumulative variance for each factor
+points(x,eig.pca$cumvariance,pch=21,bg="indianred1",cex=1.25)
+abline(h=80,lty=2,col="red",lwd=2)
+axis_fun(1,line=-0.7,x,x,seq(1,length(x),1),0.7)
+axis_fun(2,ymaj,ymin,ymaj,0.75);box(lwd=1)
+mtext(side=1,line=1.5,"Principal Components")
+mtext(side=2,line=1.75,"Percentage of Variances")
+legend.text=c("Absolute","Cumulative");#helper vaiable for legend
+pt.col=c("grey","indianred1")#helper vaiable for legend
+legend("topleft",legend=legend.text,pch=c(22,21),pt.bg=pt.col,col=c("black",pt.col[2]),lty=c(0,1),lwd=1.5,pt.cex=1.5,ncol=2,cex=0.8,bty="n",y.intersp=1,x.intersp=0.75,xpd=NA,xjust=0.5,text.col="white")
+legend("topleft",legend=legend.text,pch=c(22,21),pt.bg=pt.col,col="black",lty=0,lwd=0.5,pt.cex=1.5,ncol=2,cex=0.8,bty="n",y.intersp=1,x.intersp=0.75,xpd=NA,xjust=0.5)
+dev.off()
+
+scrs <- scores(pca.rslt,display=c("sites","species"),choices=c(1,2,3));
+wq.dat.xtab.pca <- cbind(wq.dat.xtab.pca,scrs$sites)
+summary(wq.dat.xtab.pca)
+
+#tiff(filename=paste0(plot.path,"CRE_WQ_PCA.tiff"),width=6.5,height=5,units="in",res=200,type="windows",compression=c("lzw"),bg="white")
+#png(filename=paste0(plot.path,"png/CRE_WQ_PCA.png"),width=6.5,height=4,units="in",res=200,type="windows",bg="white")
+par(family="serif",mar=c(1,3,0.1,0.5),oma=c(0,1.5,0.75,0.5));
+layout(matrix(c(1:2,3,3),2,2,byrow=T),heights=c(1,0.3))
+
+labs=c("Chla","Color","Turb","PAR","Sal","TP","SRP", "TN","DIN","30D S-79 Q","Distance")
+xlim.val=c(-1,1);by.x=1;xmaj=c(0,seq(xlim.val[1],xlim.val[2],by.x));xmin=seq(xlim.val[1],xlim.val[2],by.x/2);
+ylim.val=c(-1,2);by.y=1;ymaj=c(0,seq(ylim.val[1],ylim.val[2],by.y));ymin=seq(ylim.val[1],ylim.val[2],by.y/2);
+plot(xlim.val,ylim.val,type="n",yaxt="n",xaxt="n",ylab=NA,xlab=NA);
+abline(h=0,v=0,lty=3,col="grey");
+for(i in 1:length(est.sites)){
+  with(subset(wq.dat.xtab.pca,ALIAS==est.sites[i]),points(PC1,PC2,pch=21,bg=adjustcolor(cols[i],0.25),col=adjustcolor(cols[i],0.5),lwd=0.1,cex=1.25))
+}
+arrows(0,0,scrs$species[,1]/3,scrs$species[,2]/3,length = 0.05, angle = 15, code = 2,col="indianred1",lwd=1.5);# makes the arrows
+with(scrs,text((species[,1]+0.15)/3,species[,2]/3,labels=labs,cex=0.75,font=3));#adds labels to the arrows; 
+axis_fun(1,line=-0.5,xmaj,xmin,format(xmaj),1); #adds x axis ticks
+axis_fun(2,ymaj,ymin,format(ymaj),1); #adds y axis ticks
+mtext(side=1,line=1.8,paste0("PCA 1 (",round(eig.pca$variance[1],1),"%)"));#adds x axis label with percent variance
+mtext(side=2,line=2.25,paste0("PCA 2 (",round(eig.pca$variance[2],1),"%)"));#adds y axis label with percent variance
+
+
+xlim.val=c(-1,1);by.x=1;xmaj=c(0,seq(xlim.val[1],xlim.val[2],by.x));xmin=seq(xlim.val[1],xlim.val[2],by.x/2);
+ylim.val=c(-1,3);by.y=1;ymaj=c(0,seq(ylim.val[1],ylim.val[2],by.y));ymin=seq(ylim.val[1],ylim.val[2],by.y/2);
+plot(xlim.val,ylim.val,type="n",yaxt="n",xaxt="n",ylab=NA,xlab=NA);
+abline(h=0,v=0,lty=3,col="grey");
+for(i in 1:length(est.sites)){
+  with(subset(wq.dat.xtab.pca,ALIAS==est.sites[i]),points(PC1,PC3,pch=21,bg=adjustcolor(cols[i],0.25),col=adjustcolor(cols[i],0.5),lwd=0.1,cex=1.25))
+}
+arrows(0,0,scrs$species[,1]/3,scrs$species[,3]/3,length = 0.05, angle = 15, code = 2,col="indianred1",lwd=1.5);# makes the arrows
+with(scrs,text((species[,1]+0.15)/3,species[,3]/3,labels=labs,cex=0.75,font=3));#adds labels to the arrows; 
+axis_fun(1,line=-0.5,xmaj,xmin,format(xmaj),1); 
+axis_fun(2,ymaj,ymin,format(ymaj),1); 
+mtext(side=1,line=1.8,paste0("PCA 1 (",round(eig.pca$variance[1],1),"%)"));
+mtext(side=2,line=2.25,paste0("PCA 3 (",round(eig.pca$variance[3],1),"%)"));
+
+plot(0:1,0:1,axes=F,type="n",ylab=NA,xlab=NA)
+legend(0.5,0,legend=est.sites,
+       pch=c(21),
+       col=adjustcolor(cols,0.75),
+       pt.bg=adjustcolor(cols,0.5),
+       lwd=c(0.01),lty=c(NA),pt.cex=2,ncol=3,cex=0.75,bty="n",y.intersp=1.75,x.intersp=0.75,xpd=NA,xjust=0.5,yjust=0.1)
+dev.off()
+# -------------------------------------------------------------------------
 
 
 idvars=c("Station.ID", "ALIAS", "REGION", "Date.EST","WY")
@@ -506,6 +724,31 @@ head(WY.Q.FWM)
 
 chla.FWM=merge(chla.freq,subset(WY.Q.FWM,SITE=="S79"),"WY",all.x=T)
 head(chla.FWM)
+
+plot(Chla.per10~Chla.FWM,subset(chla.FWM,ALIAS=="CES02"))
+plot(Chla.per10~Chla.FWM,subset(chla.FWM,ALIAS=="CES03"))
+plot(Chla.per10~Chla.FWM,subset(chla.FWM,ALIAS=="CES04"))
+plot(Chla.per10~Chla.FWM,subset(chla.FWM,ALIAS=="CES05"))
+
+plot(GMChla~Chla.FWM,subset(chla.FWM,ALIAS=="CES02"))
+plot(GMChla~Chla.FWM,subset(chla.FWM,ALIAS=="CES03"))
+plot(GMChla~Chla.FWM,subset(chla.FWM,ALIAS=="CES04"))
+plot(GMChla~Chla.FWM,subset(chla.FWM,ALIAS=="CES05"))
+
+plot(GMChla~Q.km3yr,subset(chla.FWM,ALIAS=="CES02"))
+plot(GMChla~Q.km3yr,subset(chla.FWM,ALIAS=="CES03"))
+plot(GMChla~Q.km3yr,subset(chla.FWM,ALIAS=="CES04"))
+plot(GMChla~Q.km3yr,subset(chla.FWM,ALIAS=="CES05"))
+
+plot(GMChla~TP.FWM,subset(chla.FWM,ALIAS=="CES02"))
+plot(GMChla~TP.FWM,subset(chla.FWM,ALIAS=="CES03"))
+plot(GMChla~TP.FWM,subset(chla.FWM,ALIAS=="CES04"))
+plot(GMChla~TP.FWM,subset(chla.FWM,ALIAS=="CES05"))
+
+plot(GMChla~TN.FWM,subset(chla.FWM,ALIAS=="CES02"))
+plot(GMChla~TN.FWM,subset(chla.FWM,ALIAS=="CES03"))
+plot(GMChla~TN.FWM,subset(chla.FWM,ALIAS=="CES04"))
+plot(GMChla~TN.FWM,subset(chla.FWM,ALIAS=="CES05"))
 
 mod.results=data.frame()
 cols=wesanderson::wes_palette("Zissou1",4,"continuous")

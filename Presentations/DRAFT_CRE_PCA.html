@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>DRAFT: Estuary Tipping Point Analysis - PCA Analysis</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Paul Julian" />
+    <link href="libs/remark-css/default.css" rel="stylesheet" />
+    <script src="libs/kePrint/kePrint.js"></script>
+    <link rel="stylesheet" href="custcss.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+
+
+
+
+
+
+
+
+
+layout: true
+
+---
+name: xaringan-title
+class: left, middle
+
+# DRAFT: Estuary Tipping Point Analysis - PCA Analysis
+
+### .fancy[Part I: Caloosahatchee River Estuary]
+
+&lt;!--.large[&lt;font color="white"&gt;Paul Julian, PhD | May 04,2020&lt;/font&gt;]--&gt;
+
+.large[Paul Julian, PhD | May 04, 2020&lt;/font&gt;]
+
+&lt;!-- this ends up being the title slide since seal = FALSE--&gt;
+
+
+---
+class: left
+
+.pull-left[
+### Data
+
+- Water quality and hydrologic data were retrieved from the South Florida Water Management District (SFWMD) online database ([DBHYDRO]( www.sfwmd.gov/dbhydro)).
+
+- S-79 and Caloosahatchee River Esturay (CRE) monitoring network.
+
+- Period of Record: May 1, 2004 - April 30, 2019 (WY2005 - 2019).
+
+- Data were screened for fatal qualifers and reversals (i.e. SRP &gt; TP).
+
+- Data reported as less than method detection limit (MDL) were assigned one-half the MDL.
+
+]
+
+.pull-right[
+### Statistical Analysis
+
+- Principal Component Analysis using `rda(... scale = T)` in `R`.
+
+- Analyses performed in R (Ver 3.6.1)
+]
+
+---
+class: left
+
+## The Data
+
+- Daily grab samples from CES02 - CES09
+  - Chlorophyll-a (chla)
+  - Color 
+  - Turbidity (turb)
+  - Photosynthetic Active Radiation (PAR)
+  - Salinity (Sal)
+  - Total Phosphorus (TP)
+  - Soluable Reactive Phosphorus (SRP)
+  - Total Nitrogen (TN)
+  - Dissolved Inorangic Nitrogen (DIN)
+  
+- S-79, 30-Day rolling total discharge
+
+- Distance downstream from S-79 
+
+???
+Does PAR = Kd? 
+
+---
+class: left
+
+&lt;img src="C:/Julian_LaCie/_GitHub/EstuaryTip/Plots/png/CRE_WQ_scatter.png" width="95%" style="display: block; margin: auto;" /&gt;
+
+.tiny[Pairwise comparison of parameters by station. One sample excluded, (Chl-_a_ = 265 &amp;mu;g L&lt;sup&gt;-1&lt;/sup&gt; CES03; 2012-01-10) ]
+
+---
+class: left
+
+#### Measure of Sampling Adequacy (MSA)
+&lt;table class="table" style="font-size: 14px; width: auto !important; margin-left: auto; margin-right: auto;"&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:left;"&gt; Parameter &lt;/th&gt;
+   &lt;th style="text-align:center;"&gt; MSA &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; Chla &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.53 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; Color &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.90 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; Turb &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.28 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; PAR &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.82 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; Sal &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.83 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; TP &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.58 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; SRP &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.58 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; TN &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.78 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; DIN &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.72 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; q.30d &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.66 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; Dist_km &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.72 &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;tfoot&gt;
+&lt;tr&gt;&lt;td style="padding: 0; border: 0;" colspan="100%"&gt;
+&lt;sup&gt;*&lt;/sup&gt; `KMOS(...)` in the `REdaS` package&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style="padding: 0; border: 0;" colspan="100%"&gt;
+&lt;sup&gt;†&lt;/sup&gt; MSA &amp;amp; KMO threshold of 0.5 for data suitability&lt;/td&gt;&lt;/tr&gt;
+&lt;/tfoot&gt;
+&lt;/table&gt;
+
+#### Kaiser-Meyer-Olkin Statistics (KMOS)
+
+- KMO-Criterion: 0.70
+
+- If Turbidity is excluded KMO-Criterion: 0.72
+
+---
+class: left
+
+### PCA Scree Plot
+&lt;div class="figure" style="text-align: center"&gt;
+&lt;img src="C:/Julian_LaCie/_GitHub/EstuaryTip/Plots/png/CRE_WQ_scree.png" alt="Left: Scree plot of eigenvalues for each prinicipal component with the Kaiser threshold identified. Right: Scree plot of the variance and cumulative variance for each priniciple component." width="95%" /&gt;
+&lt;p class="caption"&gt;Left: Scree plot of eigenvalues for each prinicipal component with the Kaiser threshold identified. Right: Scree plot of the variance and cumulative variance for each priniciple component.&lt;/p&gt;
+&lt;/div&gt;
+
+- The first three components account for 79% of the cumulative variance. 
+
+---
+class: left
+
+### PCA Biplot
+
+&lt;div class="figure" style="text-align: center"&gt;
+&lt;img src="C:/Julian_LaCie/_GitHub/EstuaryTip/Plots/png/CRE_WQ_PCA.png" alt="Biplot comparing PCA 1, 2 and 3." width="95%" /&gt;
+&lt;p class="caption"&gt;Biplot comparing PCA 1, 2 and 3.&lt;/p&gt;
+&lt;/div&gt;
+
+???
+
+- Distance Downstream and Chl-a are postively correlated between th three components.
+
+- Color and TN (PCA 1 and 2) and Color and SRP (PCA 1 and 3) are positively correlated.
+
+---
+class: left
+
+### Next
+
+- Compare parameters at the site level (i.e. PCA for CES02, 03, etc.)
+
+- Evalute nitrogen species (NO&lt;sub&gt;x&lt;/sub&gt;, NH&lt;sub&gt;4&lt;/sub&gt;, TON, etc.) in the multi-dimensional space
+
+- Explore Non-metric multidimensional scaling (NMDS) analysis
+  - Similar to PCA with some unique differences.
+  - Both dimensionality reduction / pairwise comparison techniques
+
+
+.footnote[
+Project analysis, information and presentation can be found at [https://github.com/SwampThingPaul/EstuaryTip](https://github.com/SwampThingPaul/EstuaryTip)
+]
+
+???
+"https://sites.ualberta.ca/~lkgray/uploads/7/3/6/2/7362679/slides-nmds.pdf"
+
+PCA 
+
+The input to PCA is the original vectors in n-dimensional space and the data are projected onto the directions in the data with the most variance. Hence the “spread” of the data is roughly conserved as the dimensionality decreases.
+
+Multidimensional Scaling
+
+The input to MDS is the pairwise distances between points.
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"slideNumberFormat": "%current%",
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false,
+"ratio": "4:3"
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  /* Replace <script> tags in slides area to make them executable
+   *
+   * Runs after post-processing of markdown source into slides and replaces only
+   * <script>s on the last slide of continued slides using the .has-continuation
+   * class added by xaringan. Finally, any <script>s in the slides area that
+   * aren't executed are commented out.
+   */
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container:not(.has-continuation) script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+  var scriptsNotExecuted = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container.has-continuation script'
+  );
+  if (!scriptsNotExecuted.length) return;
+  for (var i = 0; i < scriptsNotExecuted.length; i++) {
+    var comment = document.createComment(scriptsNotExecuted[i].outerHTML)
+    scriptsNotExecuted[i].parentElement.replaceChild(comment, scriptsNotExecuted[i])
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

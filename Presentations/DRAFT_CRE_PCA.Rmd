@@ -1,0 +1,214 @@
+---
+title: "DRAFT: Estuary Tipping Point Analysis - PCA Analysis"
+subtitle: "Part I: Caloosahatchee River Estuary"
+author: "Paul Julian"
+date: "2020-05-04 (updated: `r Sys.Date()`)"
+output:
+  xaringan::moon_reader:
+    css: ["default","custcss.css"]
+    lib_dir: libs
+    self_contained: false
+    nature:
+      slideNumberFormat: "%current%"
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+      ratio: "4:3"
+    seal: false
+editor_options: 
+  chunk_output_type: console
+---
+
+
+```{r setup, include=FALSE}
+library(knitr)
+library(fontawesome)
+
+options(htmltools.dir.version = FALSE)
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
+
+```
+
+```{r custcss,include=FALSE}
+writeLines(
+  c(".tiny { 
+  font-size: 75%;
+}",
+".fancy {
+  font-family: 'Cormorant Upright', serif;
+  font-weight: 700;
+}"
+),"custcss.css")
+
+```
+
+```{r load_refs,include=FALSE,cache=FALSE}
+# 
+
+# library(RefManageR)
+# BibOptions(check.entries = FALSE,
+#            bib.style = "authoryear",
+#            cite.style = "alphabetic",
+#            style = "markdown",
+#            max.names = 2,
+#            hyperlink = FALSE,
+#            dashed = FALSE,
+#            no.print.fields=c("doi","url","isbn","issn","urldate","language"))
+# myBib <- ReadBib("Exported Items.bib", check = FALSE)
+# Citep(myBib)
+
+```
+
+layout: true
+
+---
+name: xaringan-title
+class: left, middle
+
+# DRAFT: Estuary Tipping Point Analysis - PCA Analysis
+
+### .fancy[Part I: Caloosahatchee River Estuary]
+
+<!--.large[<font color="white">Paul Julian, PhD | `r format(Sys.Date(),"%B %d,%Y")`</font>]-->
+
+.large[Paul Julian, PhD | `r format(as.Date("2020-05-04"),"%B %d, %Y")`</font>]
+
+<!-- this ends up being the title slide since seal = FALSE-->
+
+
+---
+class: left
+
+.pull-left[
+### Data
+
+- Water quality and hydrologic data were retrieved from the South Florida Water Management District (SFWMD) online database ([DBHYDRO]( www.sfwmd.gov/dbhydro)).
+
+- S-79 and Caloosahatchee River Esturay (CRE) monitoring network.
+
+- Period of Record: May 1, 2004 - April 30, 2019 (WY2005 - 2019).
+
+- Data were screened for fatal qualifers and reversals (i.e. SRP > TP).
+
+- Data reported as less than method detection limit (MDL) were assigned one-half the MDL.
+
+]
+
+.pull-right[
+### Statistical Analysis
+
+- Principal Component Analysis using `rda(... scale = T)` in `R`.
+
+- Analyses performed in R (Ver `r paste(version$major, version$minor,sep=".")`)
+]
+
+---
+class: left
+
+## The Data
+
+- Daily grab samples from CES02 - CES09
+  - Chlorophyll-a (chla)
+  - Color 
+  - Turbidity (turb)
+  - Photosynthetic Active Radiation (PAR)
+  - Salinity (Sal)
+  - Total Phosphorus (TP)
+  - Soluable Reactive Phosphorus (SRP)
+  - Total Nitrogen (TN)
+  - Dissolved Inorangic Nitrogen (DIN)
+  
+- S-79, 30-Day rolling total discharge
+
+- Distance downstream from S-79 
+
+???
+Does PAR = Kd? 
+
+---
+class: left
+
+```{r, out.width="95%",echo=FALSE,fig.align="center"}
+#to save time compling presentation
+knitr::include_graphics("C:/Julian_LaCie/_GitHub/EstuaryTip/Plots/png/CRE_WQ_scatter.png")
+```
+
+.tiny[Pairwise comparison of parameters by station. One sample excluded, (Chl-_a_ = 265 &mu;g L<sup>-1</sup> CES03; 2012-01-10) ]
+
+---
+class: left
+
+#### Measure of Sampling Adequacy (MSA)
+```{r,echo=F}
+MSA.dat=data.frame(parameter=c("Chla", "Color", "Turb", "PAR", "Sal", "TP", "SRP", "TN", "DIN","q.30d", "Dist_km"),msa=c(0.53, 0.9, 0.28, 0.82, 0.83, 0.58, 0.58, 0.78, 0.72, 0.66,0.72))
+library(kableExtra)
+knitr::kable(MSA.dat,format="html",
+      col.names = c("Parameter","MSA"),
+      align=c("l","c"),row.names = F,escape=F, booktabs = T)%>%
+  kable_styling(full_width = F,font_size=14)%>%
+  footnote(symbol=c("`KMOS(...)` in the `REdaS` package","MSA & KMO threshold of 0.5 for data suitability"))
+
+```
+
+#### Kaiser-Meyer-Olkin Statistics (KMOS)
+
+- KMO-Criterion: 0.70
+
+- If Turbidity is excluded KMO-Criterion: 0.72
+
+---
+class: left
+
+### PCA Scree Plot
+```{r,out.width="95%",echo=FALSE,fig.align="center",fig.cap="Left: Scree plot of eigenvalues for each prinicipal component with the Kaiser threshold identified. Right: Scree plot of the variance and cumulative variance for each priniciple component."}
+
+#to save time compling presentation
+knitr::include_graphics("C:/Julian_LaCie/_GitHub/EstuaryTip/Plots/png/CRE_WQ_scree.png")
+```
+
+- The first three components account for 79% of the cumulative variance. 
+
+---
+class: left
+
+### PCA Biplot
+
+```{r,out.width="95%",echo=FALSE,fig.align="center",fig.cap="Biplot comparing PCA 1, 2 and 3."}
+#to save time compling presentation
+knitr::include_graphics("C:/Julian_LaCie/_GitHub/EstuaryTip/Plots/png/CRE_WQ_PCA.png")
+```
+
+???
+
+- Distance Downstream and Chl-a are postively correlated between th three components.
+
+- Color and TN (PCA 1 and 2) and Color and SRP (PCA 1 and 3) are positively correlated.
+
+---
+class: left
+
+### Next
+
+- Compare parameters at the site level (i.e. PCA for CES02, 03, etc.)
+
+- Evalute nitrogen species (NO<sub>x</sub>, NH<sub>4</sub>, TON, etc.) in the multi-dimensional space
+
+- Explore Non-metric multidimensional scaling (NMDS) analysis
+  - Similar to PCA with some unique differences.
+  - Both dimensionality reduction / pairwise comparison techniques
+
+
+.footnote[
+Project analysis, information and presentation can be found at [https://github.com/SwampThingPaul/EstuaryTip](https://github.com/SwampThingPaul/EstuaryTip)
+]
+
+???
+"https://sites.ualberta.ca/~lkgray/uploads/7/3/6/2/7362679/slides-nmds.pdf"
+
+PCA 
+
+The input to PCA is the original vectors in n-dimensional space and the data are projected onto the directions in the data with the most variance. Hence the “spread” of the data is roughly conserved as the dimensionality decreases.
+
+Multidimensional Scaling
+
+The input to MDS is the pairwise distances between points.
